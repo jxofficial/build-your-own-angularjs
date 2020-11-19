@@ -53,9 +53,9 @@ describe('digest', function () {
         scope.counter++;
       }
     );
-    
+
     expect(scope.counter).toBe(0);
-    
+
     // runs the listenerFn on first digest
     scope.$digest();
     expect(scope.counter).toBe(1);
@@ -63,11 +63,45 @@ describe('digest', function () {
     // since val in watch function hasnt changed, listenerFn counter is still 1
     scope.$digest();
     expect(scope.counter).toBe(1);
-      
+
     scope.someValue = 'b';
+
     expect(scope.counter).toBe(1);
 
     scope.$digest();
     expect(scope.counter).toBe(2);
+  });
+
+  it('calls listener even when first legitimate watch value is set as undefined', function () {
+    scope.counter = 0;
+
+    scope.$watch(
+      function (scope) {
+        return scope.someValue; // undefined
+      },
+      function (newValue, oldValue, scope) {
+        scope.counter++;
+      }
+    );
+
+    scope.$digest();
+    expect(scope.counter).toBe(1);
+  });
+
+  it('calls listener with new value as old value instead of initalWatchFn as old value for first digest', function () {
+    scope.someValue = 123;
+    var oldValueInFirstListenerCall;
+
+    scope.$watch(
+      function (scope) {
+        return scope.someValue;
+      },
+      function (newValue, oldValue, scope) {
+        oldValueInFirstListenerCall = oldValue;
+      }
+    );
+
+    scope.$digest();
+    expect(oldValueInFirstListenerCall).toBe(123);
   });
 });

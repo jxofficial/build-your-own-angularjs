@@ -1,5 +1,7 @@
 var _ = require('lodash');
 
+function initialWatchVal() {}
+
 function Scope() {
   this.$$watchers = [];
 }
@@ -7,7 +9,8 @@ function Scope() {
 Scope.prototype.$watch = function (watchFn, listenerFn) {
   var watcher = {
     watchFn: watchFn,
-    listenerFn: listenerFn
+    listenerFn: listenerFn,
+    last: initialWatchVal
   };
   this.$$watchers.push(watcher);
 };
@@ -18,12 +21,16 @@ Scope.prototype.$digest = function () {
   var _this = this;
   var newValue, oldValue;
   _.forEach(_this.$$watchers, function (watcher) {
-    newValue = watcher.watchFn(_this);
+    newValue = watcher.watchFn(_this); // _this is scope obj
     oldValue = watcher.last;
     if (newValue !== oldValue) {
       watcher.last = newValue;
-      watcher.listenerFn(newValue, oldValue, _this); // 
+      watcher.listenerFn(
+        newValue, 
+        (oldValue === initialWatchVal ? newValue : oldValue),  
+        _this);
     }
   });
 };
+
 module.exports = Scope;
