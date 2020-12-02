@@ -104,4 +104,53 @@ describe('digest', function () {
     scope.$digest();
     expect(oldValueInFirstListenerCall).toBe(123);
   });
+
+  // this special watcher is used for later when need to be notifed of $digest call
+  it('may have watchers that omit the listener function', function () {
+    var watchFn = jasmine.createSpy().and.returnValue('value to be watched');
+    scope.$watch(watchFn); // add watcher to scope's watchers array
+
+    scope.$digest();
+    expect(watchFn).toHaveBeenCalled();
+  });
+
+  it('triggers chained watches in the same digest call', function () {
+    /* 
+    Watchers flow 
+    name -> scope.initial = scope.nameUpper.substring(0,1) + '.' -> nameUpper
+    
+    However, since scope.nameUpper/newVal is undefined on the first iteration of all watchers in order, test fails.
+
+    Goal is for first watcher to run again after second watcher has assigned the nameUpper proerty on scope.
+    Iterate over all watches until the watched properties stop changing
+    */
+    
+    scope.name = 'Jane';
+
+    scope.$watch(
+      function (scope) {
+        return scope.nameUpper;
+      },
+      function (newVal, oldVal, scope) {
+        // newVal is supposed to be nameUpper here
+        if (newVal) scope.initial = newVal.substring(0, 1) + '.';
+      }
+    );
+
+    scope.$watch(
+      function (scope) {
+        return scope.name;
+      },
+      function (newVal, oldVal, scope) {
+        if (newVal) scope.nameUpper = newVal.toUpperCase();
+      }
+    );
+
+    scope.$digest();
+    expect(scope.initial).toBe('J.');
+
+    scope.name = 'Bob';
+    scope.$digest();
+    expect(scope.initial).toBe('B.');
+  });
 });
