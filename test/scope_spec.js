@@ -132,7 +132,11 @@ describe('digest', function () {
         return scope.nameUpper;
       },
       function (newVal, oldVal, scope) {
-        // newVal is supposed to be nameUpper here
+        // newVal is supposed to be nameUpper here which is undefined
+        // and oldVal is supposed to be the initWatchValFn in the watcher, but passed into listenerFn as the same as newVal (undefined)
+        // until the second watcher runs and its listenerFn is called
+
+        // in the second test, newVal and oldVal are both 'JANE', hence this watcher's listenerFn is not called
         if (newVal) scope.initial = newVal.substring(0, 1) + '.';
       }
     );
@@ -142,6 +146,7 @@ describe('digest', function () {
         return scope.name;
       },
       function (newVal, oldVal, scope) {
+        // newVal is scope.name
         if (newVal) scope.nameUpper = newVal.toUpperCase();
       }
     );
