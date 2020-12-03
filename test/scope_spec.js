@@ -124,7 +124,7 @@ describe('digest', function () {
     Goal is for first watcher to run again after second watcher has assigned the nameUpper proerty on scope.
     Iterate over all watches until the watched properties stop changing
     */
-    
+
     scope.name = 'Jane';
 
     scope.$watch(
@@ -157,5 +157,33 @@ describe('digest', function () {
     scope.name = 'Bob';
     scope.$digest();
     expect(scope.initial).toBe('B.');
+  });
+
+  it('gives up on the watch after 10 iterations', function () {
+    scope.counterA = 0;
+    scope.counterB = 0;
+
+    scope.$watch(
+      function (scope) {
+        return scope.counterA;
+      },
+      function (newVal, oldVal, scope) {
+        scope.counterB++;
+      }
+    );
+
+    scope.$watch(
+      function (scope) {
+        return scope.counterB;
+      },
+      function (newVal, oldVal, scope) {
+        scope.counterA++;
+      }
+    );
+
+    expect(function () {
+      scope.$digest();
+    }).toThrow();
+
   });
 });
