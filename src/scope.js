@@ -14,6 +14,7 @@ Scope.prototype.$watch = function (watchFn, listenerFn) {
     last: initialWatchVal
   };
   this.$$watchers.push(watcher);
+  this.$$lastDirtyWatch = null;
 };
 
 Scope.prototype.$digest = function () {
@@ -46,7 +47,7 @@ Scope.prototype.$$digestOnce = function () {
       // update state of watchers
       watcher.last = newValue;
       isDirty = true;
-    } else if (_this.$$lastDirtyWatch == watcher) {
+    } else if (_this.$$lastDirtyWatch === watcher) {
       return false;
     }
   });
