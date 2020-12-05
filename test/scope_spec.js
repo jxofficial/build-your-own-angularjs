@@ -1,5 +1,5 @@
 'use strict';
-
+var _ = require('lodash');
 var Scope = require('../src/scope');
 
 describe('Scope', function () {
@@ -34,7 +34,7 @@ describe('digest', function () {
 
   it('calls the watch function with the scope as the argument', function () {
     var watchFn = jasmine.createSpy();
-    var listenerFn = function () {};
+    var listenerFn = function () { };
     scope.$watch(watchFn, listenerFn);
     scope.$digest();
 
@@ -69,7 +69,7 @@ describe('digest', function () {
     expect(scope.counter).toBe(1);
 
     scope.$digest();
-    expect(scope.counter).toBe(2);
+    expect(scope.counter).toBe(2); // only runs the listenerFn when it digests and sees a change
   });
 
   it('calls listener even when first legitimate watch value is set as undefined', function () {
@@ -88,6 +88,7 @@ describe('digest', function () {
     expect(scope.counter).toBe(1);
   });
 
+  // prevent exposing the initialWatchFn
   it('calls listener with new value as old value instead of initalWatchFn as old value for first digest', function () {
     scope.someValue = 123;
     var oldValueInFirstListenerCall;
@@ -184,6 +185,43 @@ describe('digest', function () {
     expect(function () {
       scope.$digest();
     }).toThrow();
+  });
 
+  it('ends the digest when the last watch is clean', function () {
+    scope.arr = _.range(100); // creates an array from 0-99
+    var watchExecutions = 0;
+
+    _.times(100, function (i) {
+      scope.$watch(
+        function (scope) {
+          watchExecutions++; // place here because for every watcher looped, it will ALWAYS run the watchFn to get the new watchedVal
+          return scope.arr[i];
+        },
+        function (newVal, oldVal, scope) { }
+      )
+    });
+
+    scope.$digest();
+    expect(watchExecutions).toBe(200);
+
+    scope.arr[0] = 456; // changing the value
+    scope.$digest();
+    expect(watchExecutions).toBe(301);
+  });
+
+  it('does not end digest such that new watches are not run', function () {
+    scope.someValue = 'abc';
+    scope.counter = 0;
+
+    scope.$watch(
+      function (scope) { return scope.someValue; },
+      function (newVal, oldVal, scope) {
+        // listenerFn adds a new watch
+        scope.$watch(
+          function (scope) { return 'some other value for the new watch'; },
+          function (newVal, oldVal, scope) { scope.counter++; }
+        )
+      }
+    )
   });
 });
