@@ -347,4 +347,54 @@ describe("digest", function () {
     scope.$digest();
     expect(scope.counter).toBe(1);
   });
+
+  it("allows destroying a watch with a removal function", function () {
+    scope.aValue = "abc";
+    scope.counter = 0;
+
+    var destroyWatch = scope.$watch(
+      function (scope) {
+        return scope.aValue;
+      },
+      function (newVal, oldVal, scope) {
+        scope.counter++;
+      }
+    );
+
+    scope.$digest();
+    expect(scope.counter).toBe(1);
+
+    scope.aValue = "def";
+    scope.$digest();
+    expect(scope.counter).toBe(2);
+
+    scope.aValue = "xyz";
+    destroyWatch();
+    scope.$digest();
+    expect(scope.counter).toBe(2);
+  });
+
+  it("allows destroying of a watch during digest", function () {
+    scope.aValue = "abc";
+    scope.watchCalls = [];
+
+    scope.$watch(function (scope) {
+      scope.watchCalls.push("first");
+      return scope.aValue;
+    });
+
+    var destroyWatch = scope.$watch(function (scope) {
+      scope.watchCalls.push("second");
+      destroyWatch();
+    });
+
+    scope.$watch(function (scope) {
+      scope.watchCalls.push("third");
+      return scope.aValue;
+    });
+
+    scope.$digest();
+    console.log(scope.watchCalls);
+    expect(scope.watchCalls).toEqual(['first', 'second', 'third', 'first', 'third']);
+  });
 });

@@ -12,14 +12,20 @@ Scope.prototype.$watch = function (
   listenerFn,
   checkBasedOnValueEquality
 ) {
+  var _this = this;
   var watcher = {
     watchFn: watchFn,
     listenerFn: listenerFn || function () {}, // if listenerFn is not provided, just create a dummy function
     checkBasedOnValueEquality: !!checkBasedOnValueEquality,
     last: initialWatchVal,
   };
-  this.$$watchers.push(watcher);
+
+  this.$$watchers.unshift(watcher); // add to front
   this.$$lastDirtyWatch = null; // handles the case where new watcher is added by the last ditry watcher's listenerFn, ensures that digest short circuit does not occur
+  return function() {
+    var i = _this.$$watchers.indexOf(watcher);
+    if (i >= 0) _this.$$watchers.splice(i, 1);
+  }
 };
 
 Scope.prototype.$digest = function () {
@@ -39,7 +45,8 @@ Scope.prototype.$$digestOnce = function () {
   // watcher.watchFn(scope) instead of watcher.watchFn(window/undefined)
   var _this = this;
   var isDirty, newValue, oldValue;
-  _.forEach(_this.$$watchers, function (watcher) {
+  // solves problem of a watcher deleting itself during its digest
+  _.forEachRight(_this.$$watchers, function (watcher) {
     try {
       newValue = watcher.watchFn(_this); // _this is scope obj
       oldValue = watcher.last;
