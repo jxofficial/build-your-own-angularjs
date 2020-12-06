@@ -1,4 +1,4 @@
-var _ = require('lodash');
+var _ = require("lodash");
 
 function initialWatchVal() {}
 
@@ -7,14 +7,19 @@ function Scope() {
   this.$$lastDirtyWatch = null;
 }
 
-Scope.prototype.$watch = function (watchFn, listenerFn) {
+Scope.prototype.$watch = function (
+  watchFn,
+  listenerFn,
+  checkBasedOnValueEquality
+) {
   var watcher = {
     watchFn: watchFn,
     listenerFn: listenerFn || function () {}, // if listenerFn is not provided, just create a dummy function
-    last: initialWatchVal
+    checkBasedOnValueEquality: !!checkBasedOnValueEquality,
+    last: initialWatchVal,
   };
   this.$$watchers.push(watcher);
-  this.$$lastDirtyWatch = null;
+  this.$$lastDirtyWatch = null; // handles the case where new watcher is added by the last ditry watcher's listenerFn, ensures that digest short circuit does not occur
 };
 
 Scope.prototype.$digest = function () {
@@ -23,8 +28,8 @@ Scope.prototype.$digest = function () {
   this.$$lastDirtyWatch = null;
   do {
     isDirty = this.$$digestOnce();
-    if (isDirty && !(ttl--)) {
-      throw '10 digest iterations reached';
+    if (isDirty && !ttl--) {
+      throw "10 digest iterations reached";
     }
   } while (isDirty);
 };
@@ -37,15 +42,23 @@ Scope.prototype.$$digestOnce = function () {
   _.forEach(_this.$$watchers, function (watcher) {
     newValue = watcher.watchFn(_this); // _this is scope obj
     oldValue = watcher.last;
-    if (newValue !== oldValue) {
+    if (
+      !_this.$$areEqual(newValue, oldValue, watcher.checkBasedOnValueEquality)
+    ) {
       _this.$$lastDirtyWatch = watcher;
+
+      // need to place here in the event the listenerFn changes the newValue when its not a primitive
+      // if primitive, it ok since listenerFn cannot make any the "actual newVal" saved above
+      watcher.last = watcher.checkBasedOnValueEquality
+        ? _.cloneDeep(newValue)
+        : newValue;
+
       watcher.listenerFn(
         newValue,
         oldValue === initialWatchVal ? newValue : oldValue,
         _this
       );
-      // update state of watchers
-      watcher.last = newValue;
+
       isDirty = true;
     } else if (_this.$$lastDirtyWatch === watcher) {
       return false;
@@ -55,6 +68,18 @@ Scope.prototype.$$digestOnce = function () {
   // ie the watched value is diff from the prev cached value in the watcher
   // then run all watches agn
   return isDirty;
+};
+
+Scope.prototype.$$areEqual = function (
+  newValue,
+  oldValue,
+  checkBasedOnValueEquality
+) {
+  if (checkBasedOnValueEquality) {
+    return _.isEqual(newValue, oldValue);
+  } else {
+    return newValue === oldValue; // check based on reference - works for primitives
+  }
 };
 
 module.exports = Scope;

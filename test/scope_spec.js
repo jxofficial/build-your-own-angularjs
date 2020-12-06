@@ -1,9 +1,9 @@
-'use strict';
-var _ = require('lodash');
-var Scope = require('../src/scope');
+"use strict";
+var _ = require("lodash");
+var Scope = require("../src/scope");
 
-describe('Scope', function () {
-  it('can be constructed and used as an object', function () {
+describe("Scope", function () {
+  it("can be constructed and used as an object", function () {
     var scope = new Scope();
     scope.aProperty = 1;
 
@@ -11,17 +11,17 @@ describe('Scope', function () {
   });
 });
 
-describe('digest', function () {
+describe("digest", function () {
   var scope;
 
   beforeEach(function () {
     scope = new Scope();
   });
 
-  it('calls the listener function of a watch on first $digest', function () {
+  it("calls the listener function of a watch on first $digest", function () {
     // data you are interested in watching
     var watchFn = function () {
-      return 'data to be watched';
+      return "data to be watched";
     };
 
     var listenerFn = jasmine.createSpy();
@@ -32,17 +32,17 @@ describe('digest', function () {
     expect(listenerFn).toHaveBeenCalled();
   });
 
-  it('calls the watch function with the scope as the argument', function () {
+  it("calls the watch function with the scope as the argument", function () {
     var watchFn = jasmine.createSpy();
-    var listenerFn = function () { };
+    var listenerFn = function () {};
     scope.$watch(watchFn, listenerFn);
     scope.$digest();
 
     expect(watchFn).toHaveBeenCalledWith(scope);
   });
 
-  it('calls the listener function when the watched value changes', function () {
-    scope.someValue = 'a';
+  it("calls the listener function when the watched value changes", function () {
+    scope.someValue = "a";
     scope.counter = 0;
 
     scope.$watch(
@@ -64,7 +64,7 @@ describe('digest', function () {
     scope.$digest();
     expect(scope.counter).toBe(1);
 
-    scope.someValue = 'b';
+    scope.someValue = "b";
 
     expect(scope.counter).toBe(1);
 
@@ -72,7 +72,7 @@ describe('digest', function () {
     expect(scope.counter).toBe(2); // only runs the listenerFn when it digests and sees a change
   });
 
-  it('calls listener even when first legitimate watch value is set as undefined', function () {
+  it("calls listener even when first legitimate watch value is set as undefined", function () {
     scope.counter = 0;
 
     scope.$watch(
@@ -89,7 +89,7 @@ describe('digest', function () {
   });
 
   // prevent exposing the initialWatchFn
-  it('calls listener with new value as old value instead of initalWatchFn as old value for first digest', function () {
+  it("calls listener with new value as old value instead of initalWatchFn as old value for first digest", function () {
     scope.someValue = 123;
     var oldValueInFirstListenerCall;
 
@@ -107,15 +107,15 @@ describe('digest', function () {
   });
 
   // this special watcher is used for later when need to be notifed of $digest call
-  it('may have watchers that omit the listener function', function () {
-    var watchFn = jasmine.createSpy().and.returnValue('value to be watched');
+  it("may have watchers that omit the listener function", function () {
+    var watchFn = jasmine.createSpy().and.returnValue("value to be watched");
     scope.$watch(watchFn); // add watcher to scope's watchers array
 
     scope.$digest();
     expect(watchFn).toHaveBeenCalled();
   });
 
-  it('triggers chained watches in the same digest call', function () {
+  it("triggers chained watches in the same digest call", function () {
     /* 
     Watchers flow 
     name -> scope.initial = scope.nameUpper.substring(0,1) + '.' -> nameUpper
@@ -126,7 +126,7 @@ describe('digest', function () {
     Iterate over all watches until the watched properties stop changing
     */
 
-    scope.name = 'Jane';
+    scope.name = "Jane";
 
     scope.$watch(
       function (scope) {
@@ -138,7 +138,7 @@ describe('digest', function () {
         // until the second watcher runs and its listenerFn is called
 
         // in the second test, newVal and oldVal are both 'JANE', hence this watcher's listenerFn is not called
-        if (newVal) scope.initial = newVal.substring(0, 1) + '.';
+        if (newVal) scope.initial = newVal.substring(0, 1) + ".";
       }
     );
 
@@ -153,14 +153,14 @@ describe('digest', function () {
     );
 
     scope.$digest();
-    expect(scope.initial).toBe('J.');
+    expect(scope.initial).toBe("J.");
 
-    scope.name = 'Bob';
+    scope.name = "Bob";
     scope.$digest();
-    expect(scope.initial).toBe('B.');
+    expect(scope.initial).toBe("B.");
   });
 
-  it('gives up on the watch after 10 iterations', function () {
+  it("gives up on the watch after 10 iterations", function () {
     scope.counterA = 0;
     scope.counterB = 0;
 
@@ -187,7 +187,7 @@ describe('digest', function () {
     }).toThrow();
   });
 
-  it('ends the digest when the last watch is clean', function () {
+  it("ends the digest when the last watch is clean", function () {
     scope.arr = _.range(100); // creates an array from 0-99
     var watchExecutions = 0;
 
@@ -197,8 +197,8 @@ describe('digest', function () {
           watchExecutions++; // place here because for every watcher looped, it will ALWAYS run the watchFn to get the new watchedVal
           return scope.arr[i];
         },
-        function (newVal, oldVal, scope) { }
-      )
+        function (newVal, oldVal, scope) {}
+      );
     });
 
     scope.$digest();
@@ -209,22 +209,77 @@ describe('digest', function () {
     expect(watchExecutions).toBe(301);
   });
 
-  it('does not end digest such that new watches are not run', function () {
-    scope.someValue = 'abc';
+  it("does not end digest such that new watches are not run", function () {
+    scope.someValue = "abc";
     scope.counter = 0;
 
     scope.$watch(
-      function (scope) { return scope.someValue; },
+      function (scope) {
+        return scope.someValue;
+      },
       function (newVal, oldVal, scope) {
         // listenerFn adds a new watch
         scope.$watch(
-          function (scope) { return 'some other value for the new watch'; },
-          function (newVal, oldVal, scope) { scope.counter++; }
-        )
+          function (scope) {
+            return "some other value for the new watch";
+          },
+          function (newVal, oldVal, scope) {
+            scope.counter++;
+          }
+        );
       }
-    )
+    );
 
     scope.$digest();
     expect(scope.counter).toBe(1);
+  });
+
+  it("compares based on value if enabled", function () {
+    scope.arr = [1, 2, 3];
+    scope.counter = 0;
+
+    scope.$watch(
+      function (scope) {
+        return scope.arr;
+      },
+      function (newVal, oldVal, scope) {
+        scope.counter++;
+      },
+      true
+    );
+
+    scope.$digest();
+    expect(scope.counter).toBe(1);
+
+    scope.arr.push(4);
+    scope.$digest();
+    expect(scope.counter).toBe(2);
+  });
+
+  it("runs the watch again when listenerFn updates newVal argument, if checking by value is enabled and newVal is non-primitive", function () {
+    scope.arr = [1, 2, 3];
+    scope.counter = 0;
+
+    scope.$watch(
+      function (scope) {
+        return scope.arr;
+      },
+      function (newVal, oldVal, scope) {
+        if (!_.includes(newVal, 99)) newVal.push(99);
+        scope.counter++;
+      },
+      true
+    );
+
+    expect(scope.arr.length).toBe(3);
+
+    scope.$digest();
+    expect(scope.arr.length).toBe(4);
+    expect(scope.counter).toBe(2); // runs the watch agn after arr was updated in first digest
+
+    // extra check to make sure that the watch is stable
+    scope.$digest();
+    expect(scope.arr.length).toBe(4);
+    expect(scope.counter).toBe(2);
   });
 });
