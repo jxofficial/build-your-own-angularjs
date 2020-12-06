@@ -22,10 +22,13 @@ Scope.prototype.$watch = function (
 
   this.$$watchers.unshift(watcher); // add to front
   this.$$lastDirtyWatch = null; // handles the case where new watcher is added by the last ditry watcher's listenerFn, ensures that digest short circuit does not occur
-  return function() {
+  return function () {
     var i = _this.$$watchers.indexOf(watcher);
-    if (i >= 0) _this.$$watchers.splice(i, 1);
-  }
+    if (i >= 0) {
+      _this.$$watchers.splice(i, 1);
+      _this.$$lastDirtyWatch = null;
+    }
+  };
 };
 
 Scope.prototype.$digest = function () {
@@ -48,28 +51,34 @@ Scope.prototype.$$digestOnce = function () {
   // solves problem of a watcher deleting itself during its digest
   _.forEachRight(_this.$$watchers, function (watcher) {
     try {
-      newValue = watcher.watchFn(_this); // _this is scope obj
-      oldValue = watcher.last;
-      if (
-        !_this.$$areEqual(newValue, oldValue, watcher.checkBasedOnValueEquality)
-      ) {
-        _this.$$lastDirtyWatch = watcher;
+      if (watcher) {
+        newValue = watcher.watchFn(_this); // _this is scope obj
+        oldValue = watcher.last;
+        if (
+          !_this.$$areEqual(
+            newValue,
+            oldValue,
+            watcher.checkBasedOnValueEquality
+          )
+        ) {
+          _this.$$lastDirtyWatch = watcher;
 
-        // need to place here in the event the listenerFn changes the newValue when its not a primitive
-        // if primitive, it ok since listenerFn cannot make any the "actual newVal" saved above
-        watcher.last = watcher.checkBasedOnValueEquality
-          ? _.cloneDeep(newValue)
-          : newValue;
+          // need to place here in the event the listenerFn changes the newValue when its not a primitive
+          // if primitive, it ok since listenerFn cannot make any the "actual newVal" saved above
+          watcher.last = watcher.checkBasedOnValueEquality
+            ? _.cloneDeep(newValue)
+            : newValue;
 
-        watcher.listenerFn(
-          newValue,
-          oldValue === initialWatchVal ? newValue : oldValue,
-          _this
-        );
+          watcher.listenerFn(
+            newValue,
+            oldValue === initialWatchVal ? newValue : oldValue,
+            _this
+          );
 
-        isDirty = true;
-      } else if (_this.$$lastDirtyWatch === watcher) {
-        return false;
+          isDirty = true;
+        } else if (_this.$$lastDirtyWatch === watcher) {
+          return false; // short circuit the digest loop
+        }
       }
     } catch (e) {
       console.error(e);

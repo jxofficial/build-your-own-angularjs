@@ -374,7 +374,7 @@ describe("digest", function () {
     expect(scope.counter).toBe(2);
   });
 
-  it("allows destroying of a watch during digest", function () {
+  it("allows a watch destroying itself during digest", function () {
     scope.aValue = "abc";
     scope.watchCalls = [];
 
@@ -395,6 +395,63 @@ describe("digest", function () {
 
     scope.$digest();
     console.log(scope.watchCalls);
-    expect(scope.watchCalls).toEqual(['first', 'second', 'third', 'first', 'third']);
+    expect(scope.watchCalls).toEqual([
+      "first",
+      "second",
+      "third",
+      "first",
+      "third",
+    ]);
+  });
+
+  it("allows a watch to destroy another during digest", function () {
+    scope.aValue = "abc";
+    scope.counter = 0;
+
+    scope.$watch(
+      function (scope) {
+        return scope.aValue;
+      },
+      function (newVal, oldVal, scope) {
+        destroySecondWatch();
+      }
+    );
+
+    var destroySecondWatch = scope.$watch(
+      function (scope) {},
+      function (newValue, oldValue, scope) {}
+    );
+    scope.$watch(
+      function (scope) {
+        return scope.aValue;
+      },
+      function (newValue, oldValue, scope) {
+        scope.counter++;
+      }
+    );
+
+    scope.$digest();
+    // iterate watchers from index 2,1,0. After index 2 removes index 1
+    // watch at index 2 becomes watch at index 1 and is executed agn
+    expect(scope.counter).toBe(1);
+  });
+
+  it("allows destroying several watchers during digest", function () {
+    scope.aValue = "abc";
+    scope.counter = 0;
+    var destroyWatch1 = scope.$watch(function (scope) {
+      destroyWatch1();
+      destroyWatch2();
+    });
+    var destroyWatch2 = scope.$watch(
+      function (scope) {
+        return scope.aValue;
+      },
+      function (newValue, oldValue, scope) {
+        scope.counter++;
+      }
+    );
+    scope.$digest();
+    expect(scope.counter).toBe(0);
   });
 });
