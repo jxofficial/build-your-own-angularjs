@@ -78,7 +78,14 @@ Scope.prototype.$$areEqual = function (
   if (checkBasedOnValueEquality) {
     return _.isEqual(newValue, oldValue);
   } else {
-    return newValue === oldValue; // check based on reference - works for primitives
+    // check based on reference - works for primitives
+    return (
+      newValue === oldValue ||
+      (typeof newValue === "number" &&
+        typeof oldValue === "number" &&
+        isNaN(newValue) &&
+        isNaN(oldValue))
+    );
   }
 };
 
