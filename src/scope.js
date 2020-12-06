@@ -40,28 +40,32 @@ Scope.prototype.$$digestOnce = function () {
   var _this = this;
   var isDirty, newValue, oldValue;
   _.forEach(_this.$$watchers, function (watcher) {
-    newValue = watcher.watchFn(_this); // _this is scope obj
-    oldValue = watcher.last;
-    if (
-      !_this.$$areEqual(newValue, oldValue, watcher.checkBasedOnValueEquality)
-    ) {
-      _this.$$lastDirtyWatch = watcher;
+    try {
+      newValue = watcher.watchFn(_this); // _this is scope obj
+      oldValue = watcher.last;
+      if (
+        !_this.$$areEqual(newValue, oldValue, watcher.checkBasedOnValueEquality)
+      ) {
+        _this.$$lastDirtyWatch = watcher;
 
-      // need to place here in the event the listenerFn changes the newValue when its not a primitive
-      // if primitive, it ok since listenerFn cannot make any the "actual newVal" saved above
-      watcher.last = watcher.checkBasedOnValueEquality
-        ? _.cloneDeep(newValue)
-        : newValue;
+        // need to place here in the event the listenerFn changes the newValue when its not a primitive
+        // if primitive, it ok since listenerFn cannot make any the "actual newVal" saved above
+        watcher.last = watcher.checkBasedOnValueEquality
+          ? _.cloneDeep(newValue)
+          : newValue;
 
-      watcher.listenerFn(
-        newValue,
-        oldValue === initialWatchVal ? newValue : oldValue,
-        _this
-      );
+        watcher.listenerFn(
+          newValue,
+          oldValue === initialWatchVal ? newValue : oldValue,
+          _this
+        );
 
-      isDirty = true;
-    } else if (_this.$$lastDirtyWatch === watcher) {
-      return false;
+        isDirty = true;
+      } else if (_this.$$lastDirtyWatch === watcher) {
+        return false;
+      }
+    } catch (e) {
+      console.error(e);
     }
   });
   // as long as there is a single watcher that still needs its listenerFn run
