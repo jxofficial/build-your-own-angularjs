@@ -43,6 +43,10 @@ Scope.prototype.$digest = function () {
   } while (isDirty);
 };
 
+Scope.prototype.$eval = function(expression, locals) {
+  return expression(this, locals);
+}
+
 Scope.prototype.$$digestOnce = function () {
   // to save the scope obj as this, so that it can be accessed inside the forEach callback
   // watcher.watchFn(scope) instead of watcher.watchFn(window/undefined)

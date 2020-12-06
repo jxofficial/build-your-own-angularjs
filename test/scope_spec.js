@@ -455,3 +455,44 @@ describe("digest", function () {
     expect(scope.counter).toBe(0);
   });
 });
+
+describe("$eval", function () {
+  var scope;
+
+  beforeEach(function () {
+    scope = new Scope();
+  });
+
+  it("executes evaled function and returns result", function () {
+    scope.aValue = 123;
+
+    var result = scope.$eval(function (scope) {
+      return scope.aValue;
+    });
+
+    expect(result).toBe(123);
+  });
+
+  it("passes second eval argument straight through", function () {
+    scope.aValue = 123;
+
+    var result = scope.$eval(function (scope, arg) {
+      return scope.aValue + arg;
+    }, 2);
+
+    expect(result).toBe(125);
+  });
+});
+
+describe("$apply", function () {
+  var scope;
+
+  beforeEach(function () {
+    scope = new Scope();
+  });
+
+  scope.aValue = 'abc';
+  scope.counter = 0;
+
+  scope.$watch()
+});
