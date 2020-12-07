@@ -491,8 +491,27 @@ describe("$apply", function () {
     scope = new Scope();
   });
 
-  scope.aValue = 'abc';
-  scope.counter = 0;
+  it("executes the given function and starts the digest", function () {
+    scope.aValue = "abc";
+    scope.counter = 0;
 
-  scope.$watch()
+    scope.$watch(
+      function (scope) {
+        return scope.aValue;
+      },
+      function (newValue, oldValue, scope) {
+        scope.counter++;
+      }
+    );
+
+    scope.$digest();
+    expect(scope.counter).toBe(1);
+
+    scope.$apply(function (scope) {
+      scope.aValue = "some other value";
+    });
+
+    // expect apply to run the function, and call $digest() which runs the watch again
+    expect(scope.counter).toBe(2);
+  });
 });
