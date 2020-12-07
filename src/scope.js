@@ -37,11 +37,10 @@ Scope.prototype.$digest = function () {
   var ttl = 10;
   this.$$lastDirtyWatch = null;
   do {
-    while(this.$$asyncQueue.length) {
+    while (this.$$asyncQueue.length) {
       var asyncTask = this.$$asyncQueue.shift();
       asyncTask.scope.$eval(asyncTask.expression);
     }
-
 
     isDirty = this.$$digestOnce();
     if (isDirty && !ttl--) {
@@ -54,9 +53,9 @@ Scope.prototype.$eval = function (expression, locals) {
   return expression(this, locals);
 };
 
-Scope.prototype.$evalAsync = function(expr) {
-  this.$$asyncQueue.push({scope: this, expression: expr});
-}
+Scope.prototype.$evalAsync = function (expr) {
+  this.$$asyncQueue.push({ scope: this, expression: expr });
+};
 
 Scope.prototype.$apply = function (expr) {
   try {

@@ -516,22 +516,26 @@ describe("$apply", function () {
   });
 });
 
-describe('$evalAsync', function() {
+describe("$evalAsync", function () {
   var scope;
 
-  beforeEach(function() {
+  beforeEach(function () {
     scope = new Scope();
   });
 
-  it('executes given function later in the same digest cycle', function() {
-    scope.arr = [1,2,3];
+  it("executes given function later in the same digest cycle", function () {
+    scope.arr = [1, 2, 3];
     scope.asyncEvaluated = false;
     scope.asyncEvaluatedImmediately = false;
 
     scope.$watch(
-      function(scope) { return scope.aValue; },
-      function(newValue, oldValue, scope) {
-        scope.$evalAsync(function(scope) { scope.asyncEvaluated = true;})
+      function (scope) {
+        return scope.aValue;
+      },
+      function (newValue, oldValue, scope) {
+        scope.$evalAsync(function (scope) {
+          scope.asyncEvaluated = true;
+        });
       }
     );
     scope.asyncEvaluatedImmediately = scope.asyncEvaluated;
@@ -541,4 +545,24 @@ describe('$evalAsync', function() {
     expect(scope.asyncEvaluatedImmediately).toBe(false);
   });
 
-})
+  it("executes $evalAsync functions added by watchFn", function () {
+    scope.arr = [1, 2, 3];
+    scope.asyncEvaluated = false;
+
+    scope.$watch(
+      function (scope) {
+        // to prevent evalAsync from getting offered into the queue after the first second call to $$digestOnce
+        if (!scope.asyncEvaluated) {
+          scope.$evalAsync(function (scope) {
+            scope.asyncEvaluated = true;
+          });
+        }
+        return scope.arr;
+      },
+      function (newVal, oldVal, scope) {}
+    );
+
+    scope.$digest();
+    expect(scope.asyncEvaluated).toBe(true);
+  });
+});

@@ -6,7 +6,9 @@
   "jasmine": false,
   "describe": false,
   "it": false,
+  "fit": false,
   "expect": false,
+  "spyOn": false,
   "beforeEach": false,
   "afterEach": false
   }
