@@ -3,10 +3,17 @@ module.exports = function (config) {
     frameworks: ['browserify', 'jasmine'],
     files: ['src/**/*.js', 'test/**/*_spec.js'],
     preprocessors: {
-      'test/**/*.js': ['jshint', 'browserify'],
-      'src/**/*.js': ['jshint', 'browserify']
+      'test/**/*.js': ['browserify'],
+      'src/**/*.js': [ 'browserify']
     },
-    browsers: ['PhantomJS'],
+    browsers: ['PhantomJS', 'Chrome'],
+    customLaunchers: {
+      ChromeDebugging: {
+        base: 'Chrome',
+        flags: ['--remote-debugging-port=9222'],
+        debug: true,
+      }
+    },
     browserify: {
       debug: true
     },

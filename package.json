@@ -3,7 +3,8 @@
   "version": "0.1.0",
   "scripts": {
     "lint": "jshint src test",
-    "test": "karma start"
+    "test": "karma start karma.conf.js --browsers=PhantomJS",
+    "debug": "karma start karma.conf.js --browsers=ChromeDebugging --source-maps"
   },
   "devDependencies": {
     "browserify": "^17.0.0",
@@ -11,6 +12,7 @@
     "jshint": "^2.12.0",
     "karma": "^5.2.3",
     "karma-browserify": "^7.0.0",
+    "karma-chrome-launcher": "^3.1.0",
     "karma-jasmine": "^4.0.1",
     "karma-jshint-preprocessor": "0.0.6",
     "karma-phantomjs-launcher": "^1.0.4",

@@ -38,7 +38,7 @@ Scope.prototype.$digest = function () {
   this.$$lastDirtyWatch = null;
   do {
     while (this.$$asyncQueue.length) {
-      var asyncTask = this.$$asyncQueue.shift();
+      var asyncTask = this.$$asyncQueue.shift(); 
       asyncTask.scope.$eval(asyncTask.expression);
     }
 
@@ -46,7 +46,7 @@ Scope.prototype.$digest = function () {
     if (isDirty && !ttl--) {
       throw "10 digest iterations reached";
     }
-  } while (isDirty);
+  } while (isDirty || this.$$asyncQueue.length);
 };
 
 Scope.prototype.$eval = function (expression, locals) {
@@ -86,7 +86,7 @@ Scope.prototype.$$digestOnce = function () {
           _this.$$lastDirtyWatch = watcher;
 
           // need to place here in the event the listenerFn changes the newValue when its not a primitive
-          // if primitive, it ok since listenerFn cannot make any the "actual newVal" saved above
+          // if primitive, it ok since listenerFn cannot change the "actual newVal" saved above
           watcher.last = watcher.checkBasedOnValueEquality
             ? _.cloneDeep(newValue)
             : newValue;

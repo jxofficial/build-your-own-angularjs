@@ -209,7 +209,7 @@ describe("digest", function () {
     expect(watchExecutions).toBe(301);
   });
 
-  it("does not end digest such that new watches are not run", function () {
+  it("does not end digest such that new watches added during the same digest call are not run", function () {
     scope.someValue = "abc";
     scope.counter = 0;
 
@@ -545,13 +545,13 @@ describe("$evalAsync", function () {
     expect(scope.asyncEvaluatedImmediately).toBe(false);
   });
 
-  it("executes $evalAsync functions added by watchFn", function () {
-    scope.arr = [1, 2, 3];
+  fit("executes $evalAsync functions added by watchFn", function () {
+    scope.arr = [1, 2, 3, 4];
     scope.asyncEvaluated = false;
 
     scope.$watch(
       function (scope) {
-        // to prevent evalAsync from getting offered into the queue after the first second call to $$digestOnce
+        // to prevent evalAsync from getting offered into the queue after the second call to $$digestOnce
         if (!scope.asyncEvaluated) {
           scope.$evalAsync(function (scope) {
             scope.asyncEvaluated = true;
@@ -564,5 +564,26 @@ describe("$evalAsync", function () {
 
     scope.$digest();
     expect(scope.asyncEvaluated).toBe(true);
+  });
+
+  it("executes $evalAsync functions left over from the second last iteration of watchers in the same digest call", function () {
+    scope.arr = [1, 2, 3];
+    scope.asyncEvaluatedCounter = 0;
+
+    // order of execution
+    // empty asyncQueue -> watchFn -> asyncQueue -> 
+    // watchFn (terminates digest because no londer dirty) -> asyncQueue 
+    scope.$watch(
+      function (scope) {
+        scope.$evalAsync(function(scope) {
+          scope.asyncEvaluatedCounter++;
+        });
+        return scope.arr;
+      }
+    );
+
+    scope.$digest();
+    expect(scope.asyncEvaluatedCounter).toBe(2);
+    expect(scope.$$asyncQueue.length).toBe(0);
   });
 });
