@@ -394,7 +394,6 @@ describe("digest", function () {
     });
 
     scope.$digest();
-    console.log(scope.watchCalls);
     expect(scope.watchCalls).toEqual([
       "first",
       "second",
@@ -551,7 +550,7 @@ describe("$evalAsync", function () {
 
     scope.$watch(
       function (scope) {
-        // to prevent evalAsync from getting offered into the queue after the first second call to $$digestOnce
+        // to prevent evalAsync from getting offered into the queue after the second call to $$digestOnce
         if (!scope.asyncEvaluated) {
           scope.$evalAsync(function (scope) {
             scope.asyncEvaluated = true;
@@ -564,5 +563,41 @@ describe("$evalAsync", function () {
 
     scope.$digest();
     expect(scope.asyncEvaluated).toBe(true);
+  });
+
+  it("executes $evalAsync functions leftover by the last non dirty watcher, in the same $digest call", function () {
+    scope.arr = [1, 2, 3];
+    scope.asyncEvaluatedCounter = 0;
+
+    scope.$watch(
+      function (scope) {
+        // since every watchFn is called for every single $$digestOnce, need to set condition for pushing function onto asyncQueue
+        // not the case for listenerFns which are only called upon watch val change
+        if (scope.asyncEvaluatedCounter < 2) {
+          scope.$evalAsync(function (scope) {
+            scope.asyncEvaluatedCounter++;
+          });
+        }
+        return scope.arr;
+      },
+      function (newVal, oldVal, scope) {}
+    );
+
+    scope.$digest();
+    expect(scope.asyncEvaluatedCounter).toBe(2);
+  });
+
+  fit("eventually halts $evalAsyncs added by watchFns", function () {
+    scope.aValue = [1, 2, 3];
+    scope.$watch(
+      function (scope) {
+        scope.$evalAsync(function (scope) {});
+        return scope.aValue;
+      },
+      function (newValue, oldValue, scope) {}
+    );
+    expect(function () {
+      scope.$digest();
+    }).toThrow();
   });
 });

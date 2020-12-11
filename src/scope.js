@@ -22,7 +22,7 @@ Scope.prototype.$watch = function (
   };
 
   this.$$watchers.unshift(watcher); // add to front
-  this.$$lastDirtyWatch = null; // handles the case where new watcher is added by the last ditry watcher's listenerFn, ensures that digest short circuit does not occur
+  this.$$lastDirtyWatch = null; // handles the case where new watcher is added by the last dirty watcher's listenerFn, ensures that digest short circuit does not occur
   return function () {
     var i = _this.$$watchers.indexOf(watcher);
     if (i >= 0) {
@@ -43,10 +43,10 @@ Scope.prototype.$digest = function () {
     }
 
     isDirty = this.$$digestOnce();
-    if (isDirty && !ttl--) {
+    if ((isDirty || this.$$asyncQueue.length) && !ttl--) {
       throw "10 digest iterations reached";
     }
-  } while (isDirty);
+  } while (isDirty || this.$$asyncQueue.length);
 };
 
 Scope.prototype.$eval = function (expression, locals) {
